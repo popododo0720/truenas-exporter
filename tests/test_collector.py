@@ -102,6 +102,23 @@ class CollectorTest(unittest.TestCase):
         self.assertEqual(s[("truenas_alerts", (("level", "WARNING"),))], 1)
         self.assertEqual(s[("truenas_alerts", (("level", "CRITICAL"),))], 0)
 
+    def test_alert_classes(self):
+        s = samples(
+            self.c._alerts(
+                FakeClient(
+                    {
+                        "alert.list": [
+                            {"level": "CRITICAL", "klass": "SMART"},
+                            {"level": "CRITICAL", "klass": "SMART"},
+                            {"level": "WARNING", "klass": "ApiKeyRevoked", "dismissed": True},
+                        ]
+                    }
+                )
+            )
+        )
+        self.assertEqual(s[("truenas_alert_class", (("klass", "SMART"), ("level", "CRITICAL")))], 2)
+        self.assertNotIn(("truenas_alert_class", (("klass", "ApiKeyRevoked"), ("level", "WARNING"))), s)
+
 
 if __name__ == "__main__":
     unittest.main()

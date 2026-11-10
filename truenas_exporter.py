@@ -261,17 +261,27 @@ class TrueNASCollector:
     def _alerts(self, client: Client) -> list[GaugeMetricFamily]:
         alerts = client.call("alert.list") or []
         counts: dict[str, int] = {}
+        by_class: dict[tuple[str, str], int] = {}
         for alert in alerts:
             if alert.get("dismissed"):
                 continue
             level = str(alert.get("level") or "UNKNOWN")
             counts[level] = counts.get(level, 0) + 1
+            key = (str(alert.get("klass") or "Unknown"), level)
+            by_class[key] = by_class.get(key, 0) + 1
         family = GaugeMetricFamily("truenas_alerts", "Active (not dismissed) TrueNAS alerts", labels=["level"])
         for level in ("INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY"):
             family.add_metric([level], counts.pop(level, 0))
         for level, count in counts.items():
             family.add_metric([level], count)
-        return [family]
+        # Which kinds of alert are active (SMART, ZpoolCapacity, ...), so an alert
+        # rule can say what it is. Only active classes appear.
+        classes = GaugeMetricFamily(
+            "truenas_alert_class", "Active (not dismissed) TrueNAS alerts per alert class", labels=["klass", "level"]
+        )
+        for (klass, level), count in sorted(by_class.items()):
+            classes.add_metric([klass, level], count)
+        return [family, classes]
 
 
 def main() -> None:

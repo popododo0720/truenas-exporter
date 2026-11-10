@@ -14,6 +14,7 @@ It exports what TrueNAS's built-in Netdata → Graphite reporting does not:
 | `truenas_disk_info` (always 1) | `disk`, `serial`, `model`, `pool` | `disk.query` |
 | `truenas_dataset_used_bytes`, `truenas_dataset_available_bytes` | `dataset`, `pool` | `pool.dataset.query` (depth ≤ `TRUENAS_DATASET_DEPTH`) |
 | `truenas_alerts` (not dismissed) | `level` | `alert.list` |
+| `truenas_alert_class` (active alert classes only, e.g. `SMART`) | `klass`, `level` | `alert.list` |
 | `truenas_up`, `truenas_scrape_duration_seconds`, `truenas_collector_error` | `collector` | exporter |
 
 Each scrape opens one WebSocket connection, logs in with `auth.login_with_api_key`, runs the queries and disconnects. A failing collector sets `truenas_collector_error{collector=...}` to 1 and does not hide the others.
